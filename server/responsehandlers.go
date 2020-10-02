@@ -29,11 +29,27 @@ import (
 	"github.com/mattermost/mattermost-server/model"
 )
 
+type RequestProfilesJSON struct {
+	UserId    string `json:"user_id"`
+	ChannelId string `json:"channel_id"`
+	Topic     string `json:"title"`
+	Desc      string `json:"description"`
+}
 type RequestCreateMeetingJSON struct {
 	UserId    string `json:"user_id"`
 	ChannelId string `json:"channel_id"`
 	Topic     string `json:"title"`
 	Desc      string `json:"description"`
+}
+
+func (p *Plugin) handleProfiles(w http.ResponseWriter, r *http.Request) {
+
+	body, _ := ioutil.ReadAll(r.Body)
+	defer r.Body.Close()
+	var request RequestProfilesJSON
+	json.Unmarshal(body, &request)
+
+	p.createProfilesPost(request.UserId, request.ChannelId)
 }
 
 //Create meeting doesn't call the BBB api to start a meeting

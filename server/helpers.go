@@ -115,6 +115,19 @@ func (p *Plugin) FindMeetingfromInternal(meetingId string) *dataStructs.MeetingR
 	return nil
 }
 
+func (p *Plugin) createProfilesPost(userId string, channelId string) {
+
+	textPost := &model.Post{UserId: userId, ChannelId: channelId,
+		Message: "#BigBlueButton #profiles", Type: "custom_bbb_profiles"}
+
+	textPost.Props = model.StringInterface{
+		"from_webhook":      "true",
+		"override_username": "BigBlueButton",
+		"override_icon_url": "https://pbs.twimg.com/profile_images/467451035837923328/JxPpOTL6_400x400.jpeg",
+	}
+
+	p.API.CreatePost(textPost)
+}
 func (p *Plugin) createStartMeetingPost(userId string, channelId string, m *dataStructs.MeetingRoom) {
 
 	config := p.config()

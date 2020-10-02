@@ -116,6 +116,8 @@ func (p *Plugin) ServeHTTP(c *plugin.Context, w http.ResponseWriter, r *http.Req
 		p.handleJoinMeeting(w, r)
 	} else if strings.HasPrefix(path, "/endmeeting") {
 		p.handleEndMeeting(w, r)
+	} else if path == "/profiles" {
+		p.handleProfiles(w, r)
 	} else if path == "/create" {
 		p.handleCreateMeeting(w, r)
 	} else if strings.HasPrefix(path, "/recordingready") {
