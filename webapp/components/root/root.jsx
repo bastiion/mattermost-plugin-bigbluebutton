@@ -46,7 +46,7 @@ export default class Root extends React.PureComponent {
       visible: PropTypes.bool.isRequired,
       actions: PropTypes.shape({startMeeting: PropTypes.func.isRequired, showRecordings: PropTypes.func.isRequired, closePopover: PropTypes.func.isRequired}).isRequired,
 
-    startMeeting: PropTypes.func.isRequired, showRecordings: PropTypes.func.isRequired, closePopover: PropTypes.func.isRequired}).isRequired
+    startMeeting: PropTypes.func.isRequired, showProfiles: PropTypes.func.isRequired , showRecordings: PropTypes.func.isRequired, closePopover: PropTypes.func.isRequired}).isRequired
 
   }
 
@@ -74,6 +74,10 @@ export default class Root extends React.PureComponent {
 
   startMeeting = async () => {
     await this.props.actions.startMeeting(this.props.channelId, "", this.props.channel.display_name);
+    this.close_the_popover()
+  }
+  showProfiles = async () => {
+    await this.props.actions.showProfiles(this.props.channelId, "", this.props.channel.display_name);
     this.close_the_popover()
   }
   close_the_popover = () =>{
@@ -134,6 +138,8 @@ export default class Root extends React.PureComponent {
       ? ':' + window.location.port
       : '');
   }
+
+
 
   render() {
     var gotoButton;
@@ -214,6 +220,12 @@ export default class Root extends React.PureComponent {
                     }
                     </span>} theme={this.props.theme}/>
             }
+            <PopoverListMembersItem
+              ariaLabel={'List Profiles'}
+              onItemClick={this.showProfiles}
+              cam={1}
+              text={<span>List Profiles</span>}
+              theme={this.props.theme} />
           </div>
           {popoverButton}
         </Popover>

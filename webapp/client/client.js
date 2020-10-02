@@ -23,6 +23,15 @@ export default class Client {
     this.url = `${siteURL}/plugins/bigbluebutton`;
   }
 
+  profilesOverview = async (userid, channelid, topic, description) => {
+    return this.doPost(`${this.url}/profiles`, {
+      user_id: userid,
+      channel_id: channelid,
+      title: topic,
+      description: description
+    });
+  }
+
   startMeeting = async (userid, channelid, topic, description) => {
     return this.doPost(`${this.url}/create`, {
       user_id: userid,

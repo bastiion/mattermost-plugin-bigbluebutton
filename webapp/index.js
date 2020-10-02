@@ -17,12 +17,14 @@ limitations under the License.
 import ChannelHeaderButton from './components/channel_header_button';
 import ProfilePopover from './components/profile_popover';
 import PostTypebbb from './components/post_type_bbb';
+import PostTypeProfiles from "./components/post_type_profiles";
 import Root from './components/root';
 import PluginId from './plugin_id';
 
 import {channelHeaderButtonAction} from './actions';
 import reducer from './reducer';
 import {initClient} from "./client";
+import "./sass/semantic.css"
 
 class PluginClass {
   initialize(registry, store) {
@@ -32,6 +34,7 @@ class PluginClass {
     initClient(siteURL);
 
     registry.registerPostTypeComponent('custom_bbb', PostTypebbb);
+    registry.registerPostTypeComponent('custom_bbb_profiles', PostTypeProfiles);
     registry.registerChannelHeaderButtonAction(
       <ChannelHeaderButton/>,() => store.dispatch(channelHeaderButtonAction()), 'BigBlueButton');
     registry.registerPopoverUserActionsComponent(ProfilePopover);

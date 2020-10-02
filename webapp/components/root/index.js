@@ -23,7 +23,7 @@ import {getChannelsInCurrentTeam, getDirectChannels, getSortedUnreadChannelIds, 
 import {getTheme} from 'mattermost-redux/selectors/entities/preferences';
 import {isRootModalVisible} from '../../selectors';
 import {getSortedDirectChannelWithUnreadsIds} from 'mattermost-redux/selectors/entities/channels';
-import {getJoinURL,startMeeting, showRecordings,closeRootModal} from '../../actions';
+import {getJoinURL, startMeeting, showRecordings, closeRootModal, showProfiles} from '../../actions';
 
 import Root from './root.jsx';
 
@@ -72,6 +72,7 @@ function mapDispatchToProps(dispatch) {
       getJoinURL,
       startMeeting,
       showRecordings,
+      showProfiles,
       closePopover,
     }, dispatch)
   };
