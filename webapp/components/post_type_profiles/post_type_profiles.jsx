@@ -28,45 +28,28 @@ export default class PostTypeProfiles extends React.PureComponent {
   render() {
     return (
 
-      <div>
+      <Card.Group>
         {this.props.channelMembers.map((member, index) => (
-          <Fragment>
             <Card>
               <Image src={Client4.getProfilePictureUrl(member.id, member.last_picture_updat)} wrapped ui={false} />
               <Card.Content>
-                <Card.Header>Matthew</Card.Header>
+                <Card.Header>{member.nickname || member.nickname.length > 0 ? member.nickname : member.username}</Card.Header>
                 <Card.Meta>
                   <span className='date'>Joined in 2015</span>
                 </Card.Meta>
                 <Card.Description>
-                  Matthew is a musician living in Nashville.
+                  {member.position}
                 </Card.Description>
               </Card.Content>
               <Card.Content extra>
                 <a>
                   <Icon name='user' />
-                  22 Friends
+                  22 Stars
                 </a>
               </Card.Content>
             </Card>
-
-          <div key={index} className="card"
-               style={{
-                 width: "18rem",
-                 display: "none",
-                 margin: "1em"
-               }}>
-            <img src={Client4.getProfilePictureUrl(member.id, member.last_picture_updat)}                 className="card-img-top" alt=""/>
-            <div className="card-body">
-              <h5 className="card-title">Card title</h5>
-              <p className="card-text">Some quick example text to build on the card title and make up the bulk of the
-                card's content.</p>
-              <a href="#" className="btn btn-primary">Go somewhere</a>
-            </div>
-          </div>
-          </Fragment>
         )) }
-      </div>
+      </Card.Group>
 
     )
   }

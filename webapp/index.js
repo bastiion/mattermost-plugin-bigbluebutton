@@ -24,7 +24,7 @@ import PluginId from './plugin_id';
 import {channelHeaderButtonAction} from './actions';
 import reducer from './reducer';
 import {initClient} from "./client";
-import "./sass/semantic.css"
+import UserSettingsBpBProfile from "./components/user_settings_general";
 
 class PluginClass {
   initialize(registry, store) {
@@ -38,6 +38,7 @@ class PluginClass {
     registry.registerChannelHeaderButtonAction(
       <ChannelHeaderButton/>,() => store.dispatch(channelHeaderButtonAction()), 'BigBlueButton');
     registry.registerPopoverUserActionsComponent(ProfilePopover);
+    registry.registerUserSettingsGeneralComponent(UserSettingsBpBProfile);
     registry.registerRootComponent(Root);
     registry.registerReducer(reducer);
 
