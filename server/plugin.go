@@ -27,6 +27,7 @@ import (
 
 	bbbAPI "github.com/blindsidenetworks/mattermost-plugin-bigbluebutton/server/bigbluebuttonapiwrapper/api"
 	"github.com/blindsidenetworks/mattermost-plugin-bigbluebutton/server/bigbluebuttonapiwrapper/dataStructs"
+	"github.com/blindsidenetworks/mattermost-plugin-bigbluebutton/server/bigbluebuttonapiwrapper/store"
 	"github.com/mattermost/mattermost-server/model"
 	"github.com/mattermost/mattermost-server/plugin"
 	"github.com/robfig/cron"
@@ -47,6 +48,7 @@ type Plugin struct {
 
 	c                            *cron.Cron
 	configuration                atomic.Value
+	Store                        store.Store
 	Meetings                     []dataStructs.MeetingRoom
 	MeetingsWaitingforRecordings []dataStructs.MeetingRoom
 }
@@ -135,6 +137,10 @@ func (p *Plugin) ServeHTTP(c *plugin.Context, w http.ResponseWriter, r *http.Req
 	} else if path == "/redirect" {
 		// html file to automatically close a window
 		_, _ = fmt.Fprintf(w, closeWindowScript)
+	} else if path == "/userProfile" {
+		p.handleGetProfileInfo(w, r)
+	} else if path == "/updateUserProfile" {
+		p.handleUpdateProfileInfo(w, r)
 	} else {
 		http.NotFound(w, r)
 	}

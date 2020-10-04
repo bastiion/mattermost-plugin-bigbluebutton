@@ -18,6 +18,7 @@ package main
 
 import (
 	"encoding/json"
+	"github.com/DSiSc/statedb-NG/common/log"
 	"github.com/blindsidenetworks/mattermost-plugin-bigbluebutton/server/mattermost"
 	"io/ioutil"
 	"net/http"
@@ -40,6 +41,20 @@ type RequestCreateMeetingJSON struct {
 	ChannelId string `json:"channel_id"`
 	Topic     string `json:"title"`
 	Desc      string `json:"description"`
+}
+
+type RequestUserProfileJSON struct {
+	UserId string `json:"user_id"`
+}
+type ResponseUserProfileJSON struct {
+	ProfileId string `json:"profile_id"`
+	Twitter   string `json:"twitter"`
+}
+
+type UpdateUserProfileJSON struct {
+	UserId string `json:"user_id"`
+	Field  string `json:"field"`
+	Value  string `json:"val"`
 }
 
 func (p *Plugin) handleProfiles(w http.ResponseWriter, r *http.Request) {
@@ -608,4 +623,89 @@ func (p *Plugin) Loopthroughrecordings() {
 			}
 		}
 	}
+}
+
+const profilesPrefix = "bbb_profiles_"
+
+func NewProfile(profileId string, userId string) *dataStructs.Profile {
+	profile := dataStructs.Profile{
+		ID:        profileId,
+		User:      userId,
+		CreatedAt: model.GetMillis(),
+		Twitter:   "",
+	}
+	return &profile
+}
+
+func (p *Plugin) handleGetProfileInfo(w http.ResponseWriter, r *http.Request) {
+
+	body, _ := ioutil.ReadAll(r.Body)
+	defer r.Body.Close()
+
+	var request RequestUserProfileJSON
+	json.Unmarshal(body, &request)
+
+	userId := request.UserId
+	profileId := profilesPrefix + userId
+
+	var userProfile dataStructs.Profile
+	_userProfile, _ := p.Store.Profiles().Get(profileId)
+	if _userProfile == nil {
+		userProfile = *NewProfile(profileId, userId)
+	} else {
+		userProfile = *_userProfile
+	}
+
+	resp := ResponseUserProfileJSON{
+		ProfileId: profileId,
+		Twitter:   userProfile.Twitter,
+	}
+
+	profileJSON, _ := json.Marshal(resp)
+	w.Header().Set("Content-Type", "application/json")
+	w.Write(profileJSON)
+}
+
+func (p *Plugin) handleUpdateProfileInfo(w http.ResponseWriter, r *http.Request) {
+
+	body, _ := ioutil.ReadAll(r.Body)
+	defer r.Body.Close()
+
+	var request UpdateUserProfileJSON
+	json.Unmarshal(body, &request)
+
+	userId := request.UserId
+	profileId := profilesPrefix + userId
+
+	var userProfile dataStructs.Profile
+	_userProfile, _ := p.Store.Profiles().Get(profileId)
+	if _userProfile == nil {
+		userProfile = *NewProfile(profileId, userId)
+		err := p.Store.Profiles().Insert(&userProfile)
+		if err != nil {
+			log.Error(err.Error() + " - Cannot store new Profile")
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+	} else {
+		userProfile = *_userProfile
+	}
+
+	userProfileNew := new(dataStructs.Profile)
+	*userProfileNew = userProfile
+	var changed = false
+	if request.Field == "Twitter" {
+		userProfileNew.Twitter = request.Value
+		changed = true
+	}
+	if changed {
+		err := p.Store.Profiles().Update(&userProfile, userProfileNew)
+		if err != nil {
+			log.Error(err.Error() + " - Cannot store new Profile")
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+	}
+
+	w.WriteHeader(http.StatusOK)
 }

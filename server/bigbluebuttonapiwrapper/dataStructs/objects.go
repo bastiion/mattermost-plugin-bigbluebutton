@@ -100,3 +100,10 @@ type WebHook struct {
 
 	WebhookResponse CreateWebhookResponse
 }
+
+type Profile struct {
+	ID        string
+	CreatedAt int64
+	User      string
+	Twitter   string
+}
