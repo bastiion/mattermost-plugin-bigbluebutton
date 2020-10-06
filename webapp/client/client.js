@@ -32,6 +32,26 @@ export default class Client {
     });
   }
 
+  userProfile = async (userid) => {
+    return this.doPost(`${this.url}/userProfile`, {
+      user_id: userid
+    });
+  }
+
+  userProfiles = async (userids) => {
+    return this.doPost(`${this.url}/userProfiles`, {
+      user_ids: userids
+    });
+  }
+
+  updateUserProfile = async (userid, field, val) => {
+    return this.doPost(`${this.url}/updateUserProfile`, {
+      user_id: userid,
+      field,
+      val
+    });
+  }
+
   startMeeting = async (userid, channelid, topic, description) => {
     return this.doPost(`${this.url}/create`, {
       user_id: userid,

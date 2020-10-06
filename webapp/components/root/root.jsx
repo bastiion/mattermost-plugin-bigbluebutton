@@ -220,12 +220,14 @@ export default class Root extends React.PureComponent {
                     }
                     </span>} theme={this.props.theme}/>
             }
-            <PopoverListMembersItem
-              ariaLabel={'List Profiles'}
-              onItemClick={this.showProfiles}
-              cam={1}
-              text={<span>List Profiles</span>}
-              theme={this.props.theme} />
+            {this.props.cur_user.roles.indexOf('system_admin') >= 0 && (
+              <PopoverListMembersItem
+                ariaLabel={'List Profiles'}
+                onItemClick={this.showProfiles}
+                cam={1}
+                text={<span>List Profiles</span>}
+                theme={this.props.theme} />
+            )}
           </div>
           {popoverButton}
         </Popover>

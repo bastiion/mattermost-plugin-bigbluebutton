@@ -25,7 +25,13 @@ import * as ChannelActions from 'mattermost-redux/actions/channels';
 
 import {ActionTypes, RHSStates} from '../utils/constants.jsx';
 import PluginId from '../plugin_id';
-import {STATUS_CHANGE, OPEN_ROOT_MODAL, CLOSE_ROOT_MODAL} from '../action_types';
+import {
+  STATUS_CHANGE,
+  OPEN_ROOT_MODAL,
+  CLOSE_ROOT_MODAL,
+  UPDATE_ACTIVE_SECTION,
+  RESET_ACTIVE_SECTION
+} from '../action_types';
 import {GetClient} from "../client";
 
 export const openRootModal = () => (dispatch) => {
@@ -382,10 +388,77 @@ export function showRecordings() {
     ]));
   };
 }
+export function getUserProfiles(userids) {
+  return async (dispatch, getState) => {
+    try {
+      const resp = GetClient().userProfiles(userids);
+      return resp;
+    } catch (error) {
+      return {error}
+    }
+  }
+
+}
+
+export function getUserProfile() {
+  return async (dispatch, getState) => {
+    try {
+      const resp = GetClient().userProfile(getState().entities.users.currentUserId);
+      return resp;
+    } catch (error) {
+      return {error}
+    }
+  }
+
+}
+
+export function submitProfile(field, value) {
+  return async (dispatch, getState) => {
+    try {
+      const resp = GetClient().updateUserProfile(getState().entities.users.currentUserId, field, value)
+      return resp;
+    } catch (error) {
+      return {error}
+    }
+  }
+}
+
+
+
 export function performSearch(terms, isMentionSearch) {
   return(dispatch, getState) => {
     const teamId = getCurrentTeamId(getState());
 
     return dispatch(searchPosts(teamId, terms, isMentionSearch));
+  };
+}
+
+export function updateActiveSection(newActiveSection) {
+  return async (dispatch, getState) => {
+    return dispatch({
+      type: UPDATE_ACTIVE_SECTION,
+      data: newActiveSection,
+    });
+  }
+}
+
+export function resetActiveSection() {
+  return async (dispatch, getState) => {
+    return dispatch({
+      type: RESET_ACTIVE_SECTION
+    });
+  }
+}
+export function openModal(modalData) {
+  return (dispatch) => {
+    const action = {
+      type: ActionTypes.MODAL_OPEN,
+      modalId: modalData.modalId,
+      dialogProps: modalData.dialogProps,
+      dialogType: modalData.dialogType,
+    };
+
+    dispatch(action);
+    return {data: true};
   };
 }

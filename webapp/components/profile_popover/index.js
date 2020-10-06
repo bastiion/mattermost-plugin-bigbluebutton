@@ -20,7 +20,7 @@ import {getCurrentTeam} from 'mattermost-redux/selectors/entities/teams';
 import {getCurrentUser} from 'mattermost-redux/selectors/entities/users';
 import ProfilePopover from './profile_popover.jsx';
 
-import {openDirectChannelToUserId, startMeeting} from '../../actions';
+import {getUserProfile, openDirectChannelToUserId, startMeeting} from '../../actions';
 
 function mapStateToProps(state, ownProps) {
   const post = ownProps.post || {};

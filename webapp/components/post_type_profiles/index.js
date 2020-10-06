@@ -1,43 +1,27 @@
-import {displayUsernameForUser} from "../../utils/user_utils";
-
 const {connect} = window.ReactRedux;
 const {bindActionCreators} = window.Redux;
-import {getCurrentUserId, getProfilesInTeam, makeGetProfilesInChannel} from 'mattermost-redux/selectors/entities/users';
 import PostTypeProfiles from "./post_type_profiles.jsx";
-import {getChannelMembersInChannels} from "mattermost-redux/selectors/entities/channels";
 import {getCurrentTeamId} from "mattermost-redux/selectors/entities/teams";
+import {getUserProfile, getUserProfiles, openModal} from "../../actions";
 
 
 function mapStateToProps(state, ownProps) {
   const post = ownProps.post || {};
-  const user = state.entities.users.profiles[post.user_id] || {};
-  let channelId = state.entities.channels.currentChannelId;
-  const channel = state.entities.channels.channels[channelId]
-  const userid = getCurrentUserId(state) || {};
-  const teamid = getCurrentTeamId(state);
-  const doGetChannelMembers = makeGetProfilesInChannel();
-  const channelMembers = state.entities
-    && state.entities.users
-    && state.entities.users.profiles
-    && Object.keys(state.entities.users.profiles).map(k => state.entities.users.profiles[k])
-    || []; //getProfilesInTeam(state, teamid); //doGetChannelMembers(state, channelId, true);
+  const teamId = getCurrentTeamId(state)
   return {
-    channelId,
-    channel,
+    teamId,
+    post,
     state,
     ...ownProps,
-    channelMembers,
-    doGetChannelMembers,
-    currentUserId: userid,
-    creatorId: user.id,
-    username: user.username,
-    creatorName: displayUsernameForUser(user, state.entities.general.config),
   };
 }
 
 function mapDispatchToProps(dispatch) {
   return {
     actions: bindActionCreators({
+      getUserProfiles,
+      getOwnUserProfile: getUserProfile,
+      openModal
     }, dispatch)
   };
 }

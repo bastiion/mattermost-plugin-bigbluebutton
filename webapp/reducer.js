@@ -1,5 +1,11 @@
 import {combineReducers} from 'redux';
-import {STATUS_CHANGE, OPEN_ROOT_MODAL, CLOSE_ROOT_MODAL} from './action_types';
+import {
+  STATUS_CHANGE,
+  OPEN_ROOT_MODAL,
+  CLOSE_ROOT_MODAL,
+  UPDATE_ACTIVE_SECTION,
+  RESET_ACTIVE_SECTION
+} from './action_types';
 
 const enabled = (state = false, action) => {
     switch (action.type) {
@@ -22,7 +28,33 @@ const rootModalVisible = (state = false, action) => {
     }
 };
 
+
+const activeSection = (state = '', action) => {
+  switch (action.type) {
+    case UPDATE_ACTIVE_SECTION: {
+      return action.data;
+    }
+    case RESET_ACTIVE_SECTION: {
+      return '';
+    }
+    default:
+      return state;
+  }
+}
+
+
+const userProfiles = (state = {}, action) => {
+  switch (action.type) {
+    case 't': {
+
+    }
+    default:
+      return state;
+  }
+}
+
 export default combineReducers({
     enabled,
     rootModalVisible,
+  activeSection
 });

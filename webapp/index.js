@@ -26,6 +26,7 @@ import reducer from './reducer';
 import {initClient} from "./client";
 import UserSettingsBpBProfile from "./components/user_settings_general";
 
+
 class PluginClass {
   initialize(registry, store) {
     window.store = store;

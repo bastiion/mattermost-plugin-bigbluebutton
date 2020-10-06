@@ -194,7 +194,8 @@ export const ActionTypes = keyMirror({
 
   STORE_REHYDRATION_FAILED: null,
 
-  DISMISS_NOTICE: null
+  DISMISS_NOTICE: null,
+
 });
 export const RHSStates = {
   MENTION: 'mention',

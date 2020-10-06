@@ -1,16 +1,25 @@
-import React, {Component} from 'react';
-import {connect} from 'react-redux';
+import {getActiveSection} from "../../selectors";
+
+const {bindActionCreators} = window.Redux;
+const {connect} = window.ReactRedux;
 import UserSettingsBpBProfile from "./UserSettingsBpBProfile";
+import {getUserProfile, resetActiveSection, submitProfile} from "../../actions";
 
-function mapStateToProps(state) {
-  return {};
+const mapStateToProps = state => {
+  return {
+    activeSection: getActiveSection( state )
+  };
 }
 
-function mapDispatchToProps(dispatch) {
-  return {};
+const mapDispatchToProps = dispatch => {
+  return bindActionCreators({
+    getUserProfile,
+    resetActiveSection,
+    submitProfile
+  }, dispatch);
 }
-
 
 export default connect(
   mapStateToProps,
+  mapDispatchToProps
 )(UserSettingsBpBProfile);

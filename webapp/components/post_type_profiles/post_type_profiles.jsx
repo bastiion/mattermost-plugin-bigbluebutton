@@ -1,60 +1,110 @@
-import React, {Fragment} from 'react';
+import React, {Fragment, useState, useEffect} from 'react';
 import PropTypes from "prop-types";
 import {Client4} from 'mattermost-redux/client';
-import { Card, Icon, Image } from 'semantic-ui-react'
-
+import {Card} from 'semantic-ui-react'
+import ProfileCard from "./profile_card.jsx";
+import {Button} from "react-bootstrap";
+import RemindProfileFiller from "./remind_profile_filler.jsx";
+import Cookies from 'js-cookie';
 
 
 //const PostUtils = window.PostUtils;
 
 
-export default class PostTypeProfiles extends React.PureComponent {
+function PostTypeProfiles({teamId, actions: {getOwnUserProfile, getUserProfiles, openModal}}) {
+  const [activeIndex, setActiveIndex] = useState(0);
+  const [reminderOpen, setReminderOpen] = React.useState(false);
+  const [channelMembers, setChannelMembers] = useState([]);
 
-  static propTypes = {
-    post: PropTypes.object.isRequired,
-    state: PropTypes.object.isRequired,
-    creatorId: PropTypes.string.isRequired,
-    currentUserId: PropTypes.string.isRequired,
-    channelId: PropTypes.string.isRequired,
-    username: PropTypes.string.isRequired,
-    channel: PropTypes.object.isRequired,
-    creatorName: PropTypes.string.isRequired,
-    channelMembers: PropTypes.array.isRequired
+  const handleClick = (e, titleProps) => {
+    const {index} = titleProps;
+    const newIndex = activeIndex === index ? -1 : index;
+
+    setActiveIndex(newIndex)
   };
 
 
-
-
-  render() {
-    return (
-
-      <Card.Group>
-        {this.props.channelMembers.map((member, index) => (
-            <Card>
-              <Image src={Client4.getProfilePictureUrl(member.id, member.last_picture_updat)} wrapped ui={false} />
-              <Card.Content>
-                <Card.Header>{member.nickname || member.nickname.length > 0 ? member.nickname : member.username}</Card.Header>
-                <Card.Meta>
-                  <span className='date'>Joined in 2015</span>
-                </Card.Meta>
-                <Card.Description>
-                  {member.position}
-                </Card.Description>
-              </Card.Content>
-              <Card.Content extra>
-                <a>
-                  <Icon name='user' />
-                  22 Stars
-                </a>
-              </Card.Content>
-            </Card>
-        )) }
-      </Card.Group>
-
-    )
+  const checkOwnProfile = async () => {
+    const ownProfile = await getOwnUserProfile();
+    if (ownProfile) {
+      const {livingPlace, pronoun} = ownProfile;
+      if (livingPlace.length == 0 || pronoun.length == 0) {
+        setReminderOpen(true);
+      }
+    }
   }
+
+  const _getProfilesInTeam = async () => {
+    //const ps = await getProfilesInTeam(teamId,0, 200);
+    const ps = await Client4.getProfilesInTeam(teamId, 0, 1000);
+    setChannelMembers(ps);
+
+  }
+  const setCSRFFromCookie = () => {
+    const csrf = Cookies.get('MMCSRF');
+    Client4.setCSRF(csrf);
+  }
+
+  useEffect(() => {
+    try {
+      //setCSRFFromCookie();
+      checkOwnProfile();
+      _getProfilesInTeam();
+
+    } catch (e) {
+    }
+  }, [teamId]);
+
+
+  const handleEditAccountSettings = () => {
+    if (window.UserSettingsModal) {
+      openModal({ModalId: 'user_settings', dialogType: window.UserSettingsModal});
+    }
+  }
+
+
+  const createGroupChat = async () => {
+    const userIds = channelMembers.map(m => m.id);
+    const href = await Client4.createGroupChannel(userIds);
+    console.log(href);
+    window.location.href = href;
+  }
+
+
+  return (
+    <Fragment>
+      <Button onClick={createGroupChat}>create group chat</Button><br/><br/>
+      <Button onClick={handleEditAccountSettings}>eigenes Profil bearbeiten</Button><br/><br/>
+      <RemindProfileFiller open={reminderOpen} openAccountSettings={handleEditAccountSettings}/>
+      <Card.Group>
+        {channelMembers.map((member, index) => (
+          <ProfileCard getUserProfiles={getUserProfiles}
+                       key={`profile_${index}`}
+                       member={member}
+                       isActive={activeIndex === index}
+                       cardIndex={index}
+                       handleAccordionClick={handleClick}/>
+        ))}
+      </Card.Group>
+    </Fragment>
+
+  );
 
 
 }
 
 
+PostTypeProfiles.propTypes = {
+  post: PropTypes.object.isRequired,
+  state: PropTypes.object.isRequired,
+  teamId: PropTypes.number.isRequired,
+  actions: {
+
+    getUserProfiles: PropTypes.func.isRequired,
+    getOwnUserProfile: PropTypes.func.isRequired,
+    openModal: PropTypes.func.isRequired,
+  }
+};
+
+
+export default PostTypeProfiles
