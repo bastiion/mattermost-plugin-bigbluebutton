@@ -28,6 +28,7 @@ import (
 	bbbAPI "github.com/blindsidenetworks/mattermost-plugin-bigbluebutton/server/bigbluebuttonapiwrapper/api"
 	"github.com/blindsidenetworks/mattermost-plugin-bigbluebutton/server/bigbluebuttonapiwrapper/dataStructs"
 	"github.com/blindsidenetworks/mattermost-plugin-bigbluebutton/server/bigbluebuttonapiwrapper/store"
+	"github.com/blindsidenetworks/mattermost-plugin-bigbluebutton/server/bigbluebuttonapiwrapper/store/kvstore"
 	"github.com/mattermost/mattermost-server/model"
 	"github.com/mattermost/mattermost-server/plugin"
 	"github.com/robfig/cron"
@@ -71,6 +72,12 @@ func (p *Plugin) OnActivate() error {
 		p.API.LogError(err.Error())
 		return err
 	}
+
+	p.Store, _ = kvstore.NewStore(p.API, manifest.Version)
+	//if err != nil {
+	//	p.API.LogError(err.Error + "failed to create store")
+	//	return err
+	//}
 
 	bbbAPI.SetAPI(config.BaseURL+"/", config.Secret)
 
@@ -139,6 +146,8 @@ func (p *Plugin) ServeHTTP(c *plugin.Context, w http.ResponseWriter, r *http.Req
 		_, _ = fmt.Fprintf(w, closeWindowScript)
 	} else if path == "/userProfile" {
 		p.handleGetProfileInfo(w, r)
+	} else if path == "/userProfiles" {
+		p.handleGetMultipleProfilesInfo(w, r)
 	} else if path == "/updateUserProfile" {
 		p.handleUpdateProfileInfo(w, r)
 	} else {

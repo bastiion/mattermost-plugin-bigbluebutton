@@ -18,7 +18,6 @@ package main
 
 import (
 	"encoding/json"
-	"github.com/DSiSc/statedb-NG/common/log"
 	"github.com/blindsidenetworks/mattermost-plugin-bigbluebutton/server/mattermost"
 	"io/ioutil"
 	"net/http"
@@ -46,9 +45,19 @@ type RequestCreateMeetingJSON struct {
 type RequestUserProfileJSON struct {
 	UserId string `json:"user_id"`
 }
+type RequestMultipleUserProfileJSON struct {
+	UserIds []string `json:"user_ids"`
+}
 type ResponseUserProfileJSON struct {
-	ProfileId string `json:"profile_id"`
-	Twitter   string `json:"twitter"`
+	ProfileId   string `json:"profile_id"`
+	UserId      string `json:"user_id"`
+	Twitter     string `json:"twitter"`
+	Age         string `json:"age"`
+	LivingPlace string `json:"livingPlace"`
+	Pronoun     string `json:"pronoun"`
+	MagicPower  string `json:"magicPower"`
+	Food        string `json:"food"`
+	Misc        string `json:"misc"`
 }
 
 type UpdateUserProfileJSON struct {
@@ -629,12 +638,60 @@ const profilesPrefix = "bbb_profiles_"
 
 func NewProfile(profileId string, userId string) *dataStructs.Profile {
 	profile := dataStructs.Profile{
-		ID:        profileId,
-		User:      userId,
-		CreatedAt: model.GetMillis(),
-		Twitter:   "",
+		ID:          profileId,
+		User:        userId,
+		CreatedAt:   model.GetMillis(),
+		Twitter:     "",
+		Age:         "",
+		LivingPlace: "",
+		Pronoun:     "",
+		MagicPower:  "",
+		Food:        "",
+		Misc:        "",
 	}
 	return &profile
+}
+
+func (p *Plugin) handleGetMultipleProfilesInfo(w http.ResponseWriter, r *http.Request) {
+
+	body, _ := ioutil.ReadAll(r.Body)
+	defer r.Body.Close()
+
+	var request RequestMultipleUserProfileJSON
+	json.Unmarshal(body, &request)
+
+	var responseArray = make([]ResponseUserProfileJSON, 0, 0)
+
+	for _, userId := range request.UserIds {
+
+		profileId := profilesPrefix + userId
+
+		var userProfile dataStructs.Profile
+		_userProfile, _ := p.Store.Profiles().Get(profileId)
+		if _userProfile == nil {
+			userProfile = *NewProfile(profileId, userId)
+		} else {
+			userProfile = *_userProfile
+		}
+
+		resp := ResponseUserProfileJSON{
+			ProfileId:   profileId,
+			UserId:      userProfile.User,
+			Twitter:     userProfile.Twitter,
+			Age:         userProfile.Age,
+			LivingPlace: userProfile.LivingPlace,
+			Pronoun:     userProfile.Pronoun,
+			MagicPower:  userProfile.MagicPower,
+			Food:        userProfile.Food,
+			Misc:        userProfile.Misc,
+		}
+
+		responseArray = append(responseArray, resp)
+	}
+
+	responseJsonArray, _ := json.Marshal(responseArray)
+	w.Header().Set("Content-Type", "application/json")
+	w.Write(responseJsonArray)
 }
 
 func (p *Plugin) handleGetProfileInfo(w http.ResponseWriter, r *http.Request) {
@@ -657,8 +714,15 @@ func (p *Plugin) handleGetProfileInfo(w http.ResponseWriter, r *http.Request) {
 	}
 
 	resp := ResponseUserProfileJSON{
-		ProfileId: profileId,
-		Twitter:   userProfile.Twitter,
+		ProfileId:   profileId,
+		UserId:      userProfile.User,
+		Twitter:     userProfile.Twitter,
+		Age:         userProfile.Age,
+		LivingPlace: userProfile.LivingPlace,
+		Pronoun:     userProfile.Pronoun,
+		MagicPower:  userProfile.MagicPower,
+		Food:        userProfile.Food,
+		Misc:        userProfile.Misc,
 	}
 
 	profileJSON, _ := json.Marshal(resp)
@@ -671,19 +735,27 @@ func (p *Plugin) handleUpdateProfileInfo(w http.ResponseWriter, r *http.Request)
 	body, _ := ioutil.ReadAll(r.Body)
 	defer r.Body.Close()
 
+	mattermost.API.LogInfo("handleUpdateProfileInfo")
+
 	var request UpdateUserProfileJSON
 	json.Unmarshal(body, &request)
+
+	mattermost.API.LogInfo("handleUpdateProfileInfo request " + request.UserId)
 
 	userId := request.UserId
 	profileId := profilesPrefix + userId
 
 	var userProfile dataStructs.Profile
+	mattermost.API.LogInfo("p.Store.Profiles().Get(profileId)")
 	_userProfile, _ := p.Store.Profiles().Get(profileId)
+	mattermost.API.LogInfo("got UserProfile")
 	if _userProfile == nil {
 		userProfile = *NewProfile(profileId, userId)
+		mattermost.API.LogInfo("got nil as profile")
 		err := p.Store.Profiles().Insert(&userProfile)
 		if err != nil {
-			log.Error(err.Error() + " - Cannot store new Profile")
+			mattermost.API.LogError(err.Error() + "got error from set profile")
+			//log.Error(err.Error() + " - Cannot store new Profile")
 			w.WriteHeader(http.StatusInternalServerError)
 			return
 		}
@@ -693,18 +765,39 @@ func (p *Plugin) handleUpdateProfileInfo(w http.ResponseWriter, r *http.Request)
 
 	userProfileNew := new(dataStructs.Profile)
 	*userProfileNew = userProfile
-	var changed = false
-	if request.Field == "Twitter" {
-		userProfileNew.Twitter = request.Value
-		changed = true
+	var changed = true
+	if request.Field == "age" {
+		userProfileNew.Age = request.Value
+	} else if request.Field == "livingPlace" {
+		userProfileNew.LivingPlace = request.Value
+	} else if request.Field == "pronoun" {
+		userProfileNew.Pronoun = request.Value
+	} else if request.Field == "magicPower" {
+		userProfileNew.MagicPower = request.Value
+	} else if request.Field == "food" {
+		userProfileNew.Food = request.Value
+	} else if request.Field == "misc" {
+		userProfileNew.Misc = request.Value
+	} else {
+		changed = false
 	}
+
 	if changed {
+		userProfileNew.ID = profileId
+		p.API.LogInfo("Something has changed - will update")
+		out, errJ := json.Marshal(userProfileNew)
+		if errJ == nil {
+			p.API.LogInfo(string(out))
+		}
 		err := p.Store.Profiles().Update(&userProfile, userProfileNew)
 		if err != nil {
-			log.Error(err.Error() + " - Cannot store new Profile")
+			p.API.LogError(err.Error() + " - Cannot store new Profile")
+			//log.Error(err.Error() + " - Cannot store new Profile")
 			w.WriteHeader(http.StatusInternalServerError)
 			return
 		}
+	} else {
+		p.API.LogInfo("nothing has changed")
 	}
 
 	w.WriteHeader(http.StatusOK)

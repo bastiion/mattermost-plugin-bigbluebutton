@@ -102,8 +102,14 @@ type WebHook struct {
 }
 
 type Profile struct {
-	ID        string
-	CreatedAt int64
-	User      string
-	Twitter   string
+	ID          string
+	CreatedAt   int64
+	User        string
+	Twitter     string
+	Age         string
+	LivingPlace string
+	Pronoun     string
+	MagicPower  string
+	Food        string
+	Misc        string
 }
