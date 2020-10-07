@@ -20,7 +20,9 @@ import (
 	"encoding/json"
 	"github.com/blindsidenetworks/mattermost-plugin-bigbluebutton/server/mattermost"
 	"io/ioutil"
+	"math/rand"
 	"net/http"
+	"strconv"
 	"strings"
 	"time"
 
@@ -64,6 +66,16 @@ type UpdateUserProfileJSON struct {
 	UserId string `json:"user_id"`
 	Field  string `json:"field"`
 	Value  string `json:"val"`
+}
+
+type SpeedDatingCreateJSON struct {
+	CreatorId       string   `json:"creator_id"`
+	RoomDisplayName string   `json:"room_display_name"`
+	UserIds         []string `json:"user_ids"`
+	TeamId          string   `json:"team_id"`
+	ExcludeUserIds  []string `json:"excluded_user_ids"`
+	UsersPerRoom    int      `json:"users_per_room"`
+	Duration        int      `json:duration`
 }
 
 func (p *Plugin) handleProfiles(w http.ResponseWriter, r *http.Request) {
@@ -728,6 +740,160 @@ func (p *Plugin) handleGetProfileInfo(w http.ResponseWriter, r *http.Request) {
 	profileJSON, _ := json.Marshal(resp)
 	w.Header().Set("Content-Type", "application/json")
 	w.Write(profileJSON)
+}
+
+func (p *Plugin) createRoom(roomDisplayName string, teamId string, creatorId string, userIds []string, duration int) {
+
+	p.API.LogInfo("Create room and meeting by " + creatorId + " in Team " + teamId + " for users " + strings.Join(userIds, ","))
+
+	cname := "kennenlernen_" + model.NewId() //string(time.Now().Unix()) + "_" +  string(rand.Intn(1000))
+	prepChannel := &model.Channel{
+		DisplayName: roomDisplayName,
+		Name:        cname,
+		Type:        model.CHANNEL_PRIVATE,
+		TeamId:      teamId,
+		CreatorId:   creatorId,
+	}
+	//channel, err := p.API.GetGroupChannel(userIds)
+	channel, err := p.API.CreateChannel(prepChannel)
+	if err != nil {
+		p.API.LogError("Cannot create group channel - " + err.Error())
+		return
+	}
+	p.API.LogInfo("Created private room " + cname + " will now populate with users")
+	for _, userId := range userIds {
+		//_, err1 := p.API.AddUserToChannel(channel.Id, userId, creatorId)
+		_, err1 := p.API.AddChannelMember(channel.Id, userId)
+		if err1 != nil {
+			p.API.LogError("Cannot add " + userId + " to the channel " + channel.Name)
+		} else {
+			p.API.LogInfo("Added " + userId + " to channel " + channel.Name)
+		}
+	}
+
+	meetingpointer := new(dataStructs.MeetingRoom)
+	err2 := p.PopulateMeeting(meetingpointer, nil, "Kennlern-Runde")
+
+	if err2 != nil {
+		//http.Error(w, "Please provide a 'Site URL' in Settings > General > Configuration.", http.StatusUnprocessableEntity)
+		p.API.LogError("Cannot PopulateMeeting! - " + err.Error())
+		return
+	}
+	meetingpointer.Duration = duration
+
+	//creates the start meeting post
+	p.createStartMeetingPost(creatorId, channel.Id, meetingpointer)
+
+	// add our newly created meeting to our array of meetings
+	p.Meetings = append(p.Meetings, *meetingpointer)
+	//channel.Id
+	var payload = map[string]interface{}{"event": "SpeeddatingChannelCreated", "channelId": channel.Id, "meetingId": meetingpointer.MeetingID_, "userIds": strings.Join(userIds, ",")}
+	p.API.PublishWebSocketEvent("SpeeddatingChannelCreated", payload, &model.WebsocketBroadcast{
+		ChannelId: channel.Id,
+	})
+
+	//add the creator
+	_, err3 := p.API.AddChannelMember(channel.Id, creatorId)
+	if err3 != nil {
+		p.API.LogError("Cannot add Creator " + creatorId + " to the channel " + channel.Name)
+	} else {
+		p.API.LogInfo("Added Creator " + creatorId + " to channel " + channel.Name)
+	}
+
+}
+
+func getNthKeyOf(m *map[string]bool, n int) (string, bool) {
+	res := ""
+	ok := false
+	index := 0
+	for key, _ := range *m {
+		if index == n {
+			res = key
+			ok = true
+			break
+		}
+		index++
+	}
+	return res, ok
+}
+
+func (p *Plugin) handleCreateSpeeddatingRooms(w http.ResponseWriter, r *http.Request) {
+
+	body, _ := ioutil.ReadAll(r.Body)
+	defer r.Body.Close()
+
+	p.API.LogInfo("handleUpdateProfileInfo")
+
+	var request SpeedDatingCreateJSON
+	json.Unmarshal(body, &request)
+
+	p.API.LogInfo("handleCreateSpeeddatingRooms request " + strings.Join(request.UserIds, ","))
+
+	usersPerRoom := request.UsersPerRoom
+	var usersLeftMap map[string]bool
+	usersLeftMap = make(map[string]bool)
+
+	for _, m := range request.UserIds {
+		usersLeftMap[m] = true
+	}
+
+	/*
+		p.API.LogInfo("Will exclude users of Channel " + request.ExcludeFromChannel)
+		orgaChannel, err := p.API.GetChannelByName(request.TeamId, request.ExcludeFromChannel, false)
+		if err == nil {
+			members, err1 := p.API.GetChannelMembers(orgaChannel.Id, 0, 100)
+			p.API.LogInfo("Will remove " + string(len(*members)) + " members from usersLeft" )
+			if err1 == nil {
+				for _, m := range *members {
+					delete(usersLeftMap, m.UserId)
+				}
+			}
+		}*/
+	p.API.LogInfo("Will exclude users of Channel " + strings.Join(request.ExcludeUserIds, ","))
+	for _, userId := range request.ExcludeUserIds {
+		delete(usersLeftMap, userId)
+	}
+
+	//usersLeft := request.UserIds
+	userCount := len(usersLeftMap)
+	leftOverCount := userCount % usersPerRoom
+	p.API.LogInfo(" there would be " + strconv.Itoa(leftOverCount) + " useres in a smaller room, will distribute")
+	//roomsCount := int(math.Floor(float64(userCount) / float64(usersPerRoom)))
+	//usersLeftCount := userCount % roomsCount
+	roomIndex := 1
+	for len(usersLeftMap) > 0 {
+		uCount := usersPerRoom
+		if len(usersLeftMap) <= usersPerRoom {
+			uCount = len(usersLeftMap)
+		} else {
+			if leftOverCount > 0 {
+				p.API.LogInfo("This time one more user for the lefties")
+				uCount++
+				leftOverCount--
+			}
+		}
+
+		p.API.LogInfo("Will select " + strconv.Itoa(uCount) + " amount of users randomly")
+
+		roomUserIds := []string{}
+		for a := 0; a < uCount; a++ {
+			user_index := 0
+			if len(usersLeftMap) > 1 {
+				user_index = rand.Intn(len(usersLeftMap) - 1)
+			}
+			userId, ok := getNthKeyOf(&usersLeftMap, user_index)
+			if ok {
+				roomUserIds = append(roomUserIds, userId)
+				//usersLeft = append(usersLeft[:user_index], usersLeft[user_index + 1:]...)
+				delete(usersLeftMap, userId)
+			} else {
+				p.API.LogError("Oops, no user forund at position " + strconv.Itoa(user_index) + " this should not happen")
+			}
+		}
+		p.createRoom(request.RoomDisplayName+" "+strconv.Itoa(roomIndex), request.TeamId, request.CreatorId, roomUserIds, request.Duration)
+		roomIndex++
+	}
+
 }
 
 func (p *Plugin) handleUpdateProfileInfo(w http.ResponseWriter, r *http.Request) {

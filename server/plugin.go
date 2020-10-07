@@ -150,6 +150,8 @@ func (p *Plugin) ServeHTTP(c *plugin.Context, w http.ResponseWriter, r *http.Req
 		p.handleGetMultipleProfilesInfo(w, r)
 	} else if path == "/updateUserProfile" {
 		p.handleUpdateProfileInfo(w, r)
+	} else if path == "/createSpeeddatingRooms" {
+		p.handleCreateSpeeddatingRooms(w, r)
 	} else {
 		http.NotFound(w, r)
 	}
