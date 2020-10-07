@@ -32,6 +32,12 @@ export default class Client {
     });
   }
 
+  createSpeeddatingRooms = async ({user_ids, creator_id, team_id,  excluded_user_ids, duration, users_per_room, room_display_name}) => {
+    return this.doPost(`${this.url}/createSpeeddatingRooms`,
+      {user_ids, creator_id, team_id,  excluded_user_ids, duration, users_per_room, room_display_name }
+      );
+  }
+
   userProfile = async (userid) => {
     return this.doPost(`${this.url}/userProfile`, {
       user_id: userid

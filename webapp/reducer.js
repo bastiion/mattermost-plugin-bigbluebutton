@@ -53,8 +53,23 @@ const userProfiles = (state = {}, action) => {
   }
 }
 
+const initialState = {modalOpen: false, meetingId: null}
+
+const datingHintModal = (state = initialState, action) => {
+  switch (action.type) {
+    case OPEN_HINT_MODAL: {
+      const { meetingId } = action.data;
+      return {...state, modalOpen: true, meetingId}
+    }
+    default:
+      return state;
+  }
+}
+
+
 export default combineReducers({
     enabled,
     rootModalVisible,
-  activeSection
+    datingHintModal,
+    activeSection
 });

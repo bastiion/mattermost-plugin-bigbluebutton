@@ -26,11 +26,18 @@ import reducer from './reducer';
 import {initClient} from "./client";
 import UserSettingsBpBProfile from "./components/user_settings_general";
 
+const handleSpeedDatingCreate = (store) => {
+  return (msg) => {
+    console.log("yeaa");
+    console.log(msg);
+  }
+}
 
 class PluginClass {
   initialize(registry, store) {
     window.store = store;
 
+    const pluginId = "bigbluebutton";
     const siteURL = store.getState().entities.general.config.SiteURL;
     initClient(siteURL);
 
@@ -40,6 +47,10 @@ class PluginClass {
       <ChannelHeaderButton/>,() => store.dispatch(channelHeaderButtonAction()), 'BigBlueButton');
     registry.registerPopoverUserActionsComponent(ProfilePopover);
     registry.registerUserSettingsGeneralComponent(UserSettingsBpBProfile);
+    registry.registerWebSocketEventHandler(
+      `custom_${pluginId}_SpeeddatingChannelCreated`,
+      handleSpeedDatingCreate(store)
+    );
     registry.registerRootComponent(Root);
     registry.registerReducer(reducer);
 

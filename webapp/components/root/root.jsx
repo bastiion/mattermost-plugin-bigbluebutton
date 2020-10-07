@@ -27,11 +27,14 @@ import {getUser} from 'mattermost-redux/selectors/entities/users';
 import {getChannel} from 'mattermost-redux/selectors/entities/channels';
 import {searchPosts} from 'mattermost-redux/actions/search'
 import * as UserUtils from 'mattermost-redux/utils/user_utils';
+import SpeeddatingModal from "../speeddating_modal";
 
 export default class Root extends React.PureComponent {
   static propTypes = {
 
     cur_user: PropTypes.object.isRequired,
+    curUserIsTeamAdmin: PropTypes.bool,
+    curUserIsSystemAdmin: PropTypes.bool,
     state: PropTypes.object.isRequired,
     teamname: PropTypes.string.isRequired,
     lastpostperchannel: PropTypes.object.isRequired,
@@ -39,14 +42,17 @@ export default class Root extends React.PureComponent {
     theme: PropTypes.object.isRequired,
     channelName: PropTypes.string.isRequired,
     channel: PropTypes.object.isRequired,
-    actions: PropTypes.shape({getJoinURL: PropTypes.func.isRequired,
-      channelId: PropTypes.string.isRequired,
-      directChannels: PropTypes.array.isRequired,
-      teamId: PropTypes.string.isRequired,
-      visible: PropTypes.bool.isRequired,
-      actions: PropTypes.shape({startMeeting: PropTypes.func.isRequired, showRecordings: PropTypes.func.isRequired, closePopover: PropTypes.func.isRequired}).isRequired,
-
-    startMeeting: PropTypes.func.isRequired, showProfiles: PropTypes.func.isRequired , showRecordings: PropTypes.func.isRequired, closePopover: PropTypes.func.isRequired}).isRequired
+    channelId: PropTypes.string.isRequired,
+    directChannels: PropTypes.array.isRequired,
+    teamId: PropTypes.string.isRequired,
+    visible: PropTypes.bool.isRequired,
+    actions: PropTypes.shape({
+      getJoinURL: PropTypes.func.isRequired,
+      startMeeting: PropTypes.func.isRequired,
+      showProfiles: PropTypes.func.isRequired ,
+      showRecordings: PropTypes.func.isRequired,
+      closePopover: PropTypes.func.isRequired
+    }).isRequired,
 
   }
 
@@ -60,12 +66,16 @@ export default class Root extends React.PureComponent {
       channelName: "",
       meetingId: "",
       profilePicUrl: "",
-      channelURL: ""
+      channelURL: "",
+      showSpeeddatingModal: false
     };
   }
 
   handleClose = () => {
     this.setState({show: false});
+  };
+  handleCloseSpeeddatingModal = () => {
+    this.setState({showSpeeddatingModal: false});
   };
 
   searchRecordings = () => {
@@ -107,6 +117,11 @@ export default class Root extends React.PureComponent {
     });
 
   };
+
+  makeSpeeddating = () => {
+    this.setState({showSpeeddatingModal: true})
+  }
+
 
   getJoinURL = async () => {
     var userAgent = navigator.userAgent.toLowerCase();
@@ -180,6 +195,10 @@ export default class Root extends React.PureComponent {
 
     style.popover["marginLeft"] = pos_width
     style.popoverDM["marginLeft"] = pos_width
+    style.popover["height"] =this.props.curUserIsSystemAdmin ? "305px" : "105px"
+    style.popoverDM["height"] =this.props.curUserIsSystemAdmin ? "305px" : "105px"
+    style.popoverBody["height"] =this.props.curUserIsSystemAdmin ? "505px" : "305px"
+    style.popoverBodyDM["height"] =this.props.curUserIsSystemAdmin ? "505px" : "305px"
 
     const myteam = this.props.teamname
     const tooltip = (<Tooltip id="tooltip">
@@ -220,12 +239,20 @@ export default class Root extends React.PureComponent {
                     }
                     </span>} theme={this.props.theme}/>
             }
-            {this.props.cur_user.roles.indexOf('system_admin') >= 0 && (
+            {this.props.curUserIsSystemAdmin && (
               <PopoverListMembersItem
                 ariaLabel={'List Profiles'}
                 onItemClick={this.showProfiles}
                 cam={1}
                 text={<span>List Profiles</span>}
+                theme={this.props.theme} />
+            )}
+            {this.props.curUserIsSystemAdmin && (
+              <PopoverListMembersItem
+                ariaLabel={'Kennlernrunde starten'}
+                onItemClick={this.makeSpeeddating}
+                cam={1}
+                text={<span>Kennlernrunde starten</span>}
                 theme={this.props.theme} />
             )}
           </div>
@@ -268,6 +295,17 @@ export default class Root extends React.PureComponent {
 
       </Modal.Footer>
     </Modal>
+        <Modal show={this.state.showSpeeddatingModal} onHide={this.handleCloseSpeeddatingModal}>
+          <Modal.Header closeButton={true} style={style.header}>Kennlern Runde</Modal.Header>
+          <SpeeddatingModal />
+          <Modal.Footer>
+            <button type='button' className='btn btn-default' onClick={this.handleCloseSpeeddatingModal}>
+              Close
+
+            </button>
+
+          </Modal.Footer>
+        </Modal>
   </div>);
   }
 }

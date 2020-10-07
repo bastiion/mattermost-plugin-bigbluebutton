@@ -19,11 +19,16 @@ const {bindActionCreators} = window.Redux;
 import {getCurrentTeam} from 'mattermost-redux/selectors/entities/teams';
 import {getCurrentUser} from 'mattermost-redux/selectors/entities/users';
 import {getLastPostPerChannel} from 'mattermost-redux/selectors/entities/posts';
-import {getChannelsInCurrentTeam, getDirectChannels, getSortedUnreadChannelIds, makeGetChannel} from 'mattermost-redux/selectors/entities/channels';
+import {getDirectChannels} from 'mattermost-redux/selectors/entities/channels';
 import {getTheme} from 'mattermost-redux/selectors/entities/preferences';
 import {isRootModalVisible} from '../../selectors';
 import {getSortedDirectChannelWithUnreadsIds} from 'mattermost-redux/selectors/entities/channels';
-import {getJoinURL, startMeeting, showRecordings, closeRootModal, showProfiles} from '../../actions';
+import {
+  getJoinURL,
+  startMeeting,
+  showRecordings,
+  closeRootModal,
+  showProfiles} from '../../actions';
 
 import Root from './root.jsx';
 
@@ -45,6 +50,8 @@ function mapStateToProps(state, ownProps) {
     channelId = '';
   }
   let teamId = state.entities.teams.currentTeamId;
+  const curUserIsSystemAdmin = cur_user.roles && cur_user.roles.indexOf('system_admin') >= 0;
+  const curUserIsTeamAdmin = cur_user.roles && cur_user.roles.indexOf('team_admin') >= 0;
 
   return {
     visible: isRootModalVisible(state),
@@ -55,6 +62,8 @@ function mapStateToProps(state, ownProps) {
     teamId,
 
     cur_user,
+    curUserIsSystemAdmin,
+    curUserIsTeamAdmin,
     teamname,
     state,
     theme: getTheme(state),

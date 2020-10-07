@@ -30,7 +30,7 @@ import {
   OPEN_ROOT_MODAL,
   CLOSE_ROOT_MODAL,
   UPDATE_ACTIVE_SECTION,
-  RESET_ACTIVE_SECTION
+  RESET_ACTIVE_SECTION, OPEN_HINT_MODAL
 } from '../action_types';
 import {GetClient} from "../client";
 
@@ -45,6 +45,13 @@ export const closeRootModal = () => (dispatch) => {
         type: CLOSE_ROOT_MODAL,
     });
 };
+
+export const openHintModal= (meetingId) => (dispatch) => {
+  dispatch({
+    type: OPEN_HINT_MODAL,
+    data: {meetingId}
+  })
+}
 
 export const mainMenuAction = openRootModal;
 export const channelHeaderButtonAction = openRootModal;
@@ -418,6 +425,28 @@ export function submitProfile(field, value) {
       const resp = GetClient().updateUserProfile(getState().entities.users.currentUserId, field, value)
       return resp;
     } catch (error) {
+      return {error}
+    }
+  }
+}
+
+export function createSpeeddatingRooms({user_ids, excluded_user_ids, users_per_room, duration, room_display_name}) {
+  return async (dispatch, getState) => {
+    try {
+      console.log("almost")
+      const state = getState();
+      console.log("now..")
+      const resp = GetClient().createSpeeddatingRooms({
+        team_id: getCurrentTeamId(state),
+        creator_id: getCurrentUserId(state),
+        user_ids,
+        excluded_user_ids,
+        users_per_room,
+        duration,
+        room_display_name
+      });
+      return resp;
+    } catch(error) {
       return {error}
     }
   }

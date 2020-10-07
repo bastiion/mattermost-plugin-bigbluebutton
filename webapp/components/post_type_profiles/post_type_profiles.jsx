@@ -63,17 +63,9 @@ function PostTypeProfiles({teamId, actions: {getOwnUserProfile, getUserProfiles,
   }
 
 
-  const createGroupChat = async () => {
-    const userIds = channelMembers.map(m => m.id);
-    const href = await Client4.createGroupChannel(userIds);
-    console.log(href);
-    window.location.href = href;
-  }
-
 
   return (
     <Fragment>
-      <Button onClick={createGroupChat}>create group chat</Button><br/><br/>
       <Button onClick={handleEditAccountSettings}>eigenes Profil bearbeiten</Button><br/><br/>
       <RemindProfileFiller open={reminderOpen} openAccountSettings={handleEditAccountSettings}/>
       <Card.Group>
