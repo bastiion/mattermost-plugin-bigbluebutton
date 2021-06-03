@@ -215,7 +215,6 @@ export default class Root extends React.PureComponent {
                     </span>} theme={this.props.theme}/>
             }
           </div>
-          {popoverButton}
         </Popover>
       </Overlay>
     }

@@ -4,6 +4,11 @@ define GetFromManifest
 $(shell node -p "require('./plugin.json').$(1)")
 endef
 
+dockershell:
+	@echo "Will bash into apline based docker"
+
+	docker run -it -v $(shell pwd):/go/src/github.com/blindsidenetworks/mattermost-plugin-bigbluebutton/ mattermost-plugin-bigbluebutton /bin/bash
+
 quickbuild:
 	@echo Building plugin
 
@@ -14,8 +19,8 @@ quickbuild:
 	mkdir -p dist/bigbluebutton/server
 
 	# Clean old dist
-	rm -rf webapp/dist
-	cd webapp && npm run build
+    #rm -rf webapp/dist
+	#cd webapp && npm run build
 
 	# Copy files from webapp
 	mkdir -p dist/bigbluebutton/webapp
@@ -25,16 +30,16 @@ quickbuild:
 	cp plugin.json dist/bigbluebutton/
 
 	# Package darwin pakckage
-	mv dist/intermediate/plugin_darwin_amd64 dist/bigbluebutton/server/plugin.exe
-	cd dist && tar -zcvf bigbluebutton_darwin_amd64.tar.gz bigbluebutton/*
+	#mv dist/intermediate/plugin_darwin_amd64 dist/bigbluebutton/server/plugin.exe
+	#cd dist && tar -zcvf bigbluebutton_darwin_amd64.tar.gz bigbluebutton/*
 
 	# Package linux package
 	mv dist/intermediate/plugin_linux_amd64 dist/bigbluebutton/server/plugin.exe
 	cd dist && tar -zcvf bigbluebutton_linux_amd64.tar.gz bigbluebutton/*
 
 	# Package windows package
-	mv dist/intermediate/plugin_windows_amd64.exe dist/bigbluebutton/server/plugin.exe
-	cd dist && tar -zcvf bigbluebutton_windows_amd64.tar.gz bigbluebutton/*
+	#mv dist/intermediate/plugin_windows_amd64.exe dist/bigbluebutton/server/plugin.exe
+	#cd dist && tar -zcvf bigbluebutton_windows_amd64.tar.gz bigbluebutton/*
 
 	# Clean up temp files
 	rm -rf dist/bigbluebutton

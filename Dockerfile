@@ -1,4 +1,5 @@
-FROM bastilion/mattermost-build-base:latest
+#FROM mattermost-build-base:ubuntu-golang-1.13-node-14.12
+FROM mattermost-build-base:latest
 
 RUN apk add --no-cache expat expat-dev
 

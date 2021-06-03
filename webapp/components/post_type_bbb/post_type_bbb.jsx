@@ -45,6 +45,7 @@ export default class PostTypebbb extends React.PureComponent {
     channel: PropTypes.object.isRequired,
     compactDisplay: PropTypes.bool,
     isRHS: PropTypes.bool,
+    isTeamAdmin: PropTypes.bool,
     useMilitaryTime: PropTypes.bool,
     theme: PropTypes.object.isRequired,
     creatorName: PropTypes.string.isRequired,
@@ -506,7 +507,7 @@ export default class PostTypebbb extends React.PureComponent {
         <div style={style.container}>
           <div style={style.body}>
             {content}
-            {recordingstuff}
+            {props.isTeamAdmin && recordingstuff}
           </div>
         </div>
       </div>
